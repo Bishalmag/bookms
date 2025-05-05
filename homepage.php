@@ -1,171 +1,268 @@
+<?php
+// Database configuration for XAMPP
+$host = 'localhost';
+$dbname = 'book_management_system';
+$username = 'root';  // Default XAMPP username
+$password = '';      // Default XAMPP password (empty)
+
+// Initialize variables
+$books = [];
+$error = '';
+$search = $_GET['search'] ?? '';
+$category = $_GET['category'] ?? '';
+
+try {
+    // Create PDO connection
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Build the query (keeping your original query structure)
+    $query = "SELECT 
+                b.book_id, 
+                b.title, 
+                b.author_id,
+                b.price,
+                b.publisher,
+                b.publication_year,
+                b.copies_available,
+                b.total_copies,
+                b.image,
+                c.type AS category
+              FROM books b
+              JOIN authors a ON b.author_id = a.author_id
+              JOIN categories c ON b.category_id = c.category_id
+              WHERE 1=1";
+    
+    $params = [];
+    
+    // Add search filter if provided
+    if (!empty($search)) {
+        $query .= " AND (b.title LIKE ? OR a.name LIKE ?)";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+    
+    // Add category filter if provided
+    if (!empty($category)) {
+        $query .= " AND c.type = ?";
+        $params[] = $category;
+    }
+    
+    $query .= " ORDER BY b.title ASC";
+    
+    // Prepare and execute
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Fetch average ratings for books
+    $ratings_query = "SELECT book_id, AVG(rating) AS avg_rating FROM ratings GROUP BY book_id";
+    $ratings_stmt = $pdo->prepare($ratings_query);
+    $ratings_stmt->execute();
+    $ratings = $ratings_stmt->fetchAll(PDO::FETCH_ASSOC);
+    $ratings_map = [];
+    foreach ($ratings as $rating) {
+        $ratings_map[$rating['book_id']] = round($rating['avg_rating'], 2);
+    }
+    
+} catch(PDOException $e) {
+    $error = "Database error: " . $e->getMessage();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Book Management System</title>
-
-  <!-- External CSS -->
-  <link rel="stylesheet" href="./css/style.css" />
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="image/favicon.ico" />
-
-  <!-- Ionicons -->
-  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .book-card {
+            transition: transform 0.3s;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .book-img-container {
+            position: relative;
+            width: 100%;
+            padding-top: 150%; /* 3:2 aspect ratio */
+            overflow: hidden;
+        }
+        .book-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .book-card:hover .book-img {
+            transform: scale(1.05);
+        }
+        .book-info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 20px 15px 15px;
+        }
+        .book-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+        }
+        .book-meta {
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+            color: rgba(255,255,255,0.9);
+        }
+        .availability-badge {
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+        .book-hover-buttons {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            width: 100%;
+        }
+        .book-card:hover .book-hover-buttons {
+            display: block;
+        }
+        .no-image-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+    </style>
 </head>
-
 <body>
+    <div class="container py-5">
+        <h1 class="text-center mb-5">Book Management System</h1>
+        
+        <?php if ($error): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        
+        <!-- Search Form -->
+        <div class="search-container mb-5">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <input type="text" name="search" class="form-control" placeholder="Search by title or author" 
+                           value="<?= htmlspecialchars($search) ?>">
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <?php
+                        // Fetch unique categories from books
+                        try {
+                            $catStmt = $pdo->query("SELECT DISTINCT type FROM categories ORDER BY type");
+                            while ($cat = $catStmt->fetch(PDO::FETCH_ASSOC)) {
+                                $selected = ($category == $cat['type']) ? 'selected' : '';
+                                echo "<option value='".htmlspecialchars($cat['type'])."' $selected>".htmlspecialchars($cat['type'])."</option>";
+                            }
+                        } catch (Exception $e) {
+                            echo "<!-- Error fetching categories: ".htmlspecialchars($e->getMessage())." -->";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                    <a href="?" class="btn btn-outline-secondary w-100 mt-2">Reset</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Books Display -->
+        <?php if (empty($books)): ?>
+            <div class="alert alert-info text-center">No books found matching your criteria.</div>
+        <?php else: ?>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <?php foreach ($books as $book): ?>
+                    <div class="col">
+                        <div class="card book-card">
+                            <div class="book-img-container">
+                                <?php if (!empty($book['image'])): ?>
+                                    <img src="admin/uploads/<?= htmlspecialchars($book['image']) ?>" class="book-img" alt="<?= htmlspecialchars($book['title']) ?>">
+                                <?php else: ?>
+                                    <div class="no-image-placeholder">
+                                        <span>No Image Available</span>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="book-info-overlay">
+                                    <h5 class="book-title"><?= htmlspecialchars($book['title']) ?></h5>
+                                    
+                                    <div class="book-meta">
+                                        <?php if (!empty($book['category'])): ?>
+                                            <span class="badge bg-secondary"><?= htmlspecialchars($book['category']) ?></span>
+                                        <?php endif; ?>
+                                        <span class="fw-bold">$<?= number_format($book['price'], 2) ?></span>
+                                    </div>
+                                    
+                                    <div class="book-meta">
+                                        <small>Publisher: <?= htmlspecialchars($book['publisher']) ?></small><br>
+                                        <small>Year: <?= htmlspecialchars($book['publication_year']) ?></small>
+                                    </div>
+                                    
+                                    <div class="availability-badge">
+                                        <?php if ($book['copies_available'] > 0): ?>
+                                            <span class="badge bg-success">
+                                                Available: <?= $book['copies_available'] ?> of <?= $book['total_copies'] ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
 
-  <!-- Header -->
-  <header id="header">
-    <div id="logo">
-      <img src="image/image.png" alt="Logo" />
-    </div>
-    <div id="banner">
-      <h1>Book Management System</h1>
-    </div>
-  </header>
-
-  <!-- Navbar -->
-  <nav class="navbar-list">
-    <ul>
-      <li><a href="#home" class="navbar-link">Home</a></li>
-      <li><a href="#about" class="navbar-link">About Us</a></li>
-      
-      <li><a href="#contact" class="navbar-link">Contact Us</a></li>
-    </ul>
-  </nav>
-  <div >
-        <p>
-        Neymar da Silva Santos Júnior, commonly known as Neymar Jr. or simply Neymar, is a Brazilian professional footballer widely regarded as one of the best players of his generation. Known for his dribbling, creativity, and flair, he has played for top clubs like Santos, Barcelona, Paris Saint-Germain (PSG), and Al Hilal.
-
-Early Life
-Born: February 5, 1992, in Mogi das Cruzes, São Paulo, Brazil.
-
-Family: Son of Neymar Santos Sr. and Nadine da Silva. His father was a former footballer and has been his advisor throughout his career.
-
-Early Career: Joined Santos FC’s youth academy at age 11, following in the footsteps of Brazilian legend Pelé.
-
-Club Career
-Santos (2009–2013)
-
-Debuted at 17 and quickly became a star.
-
-Won Copa do Brasil (2010), Copa Libertadores (2011), and South American Footballer of the Year (2011, 2012).
-
-Scored 138 goals in 230 matches.
-
-FC Barcelona (2013–2017)
-
-Transferred for €88.2 million, forming the legendary "MSN" trio with Messi and Suárez.
-
-Won the Treble (La Liga, Copa del Rey, Champions League) in 2014–15.
-
-Scored 105 goals in 186 matches.
-
-Paris Saint-Germain (2017–2023)
-
-World-record transfer: €222 million (most expensive player ever at the time).
-
-Won 5 Ligue 1 titles and reached the 2020 UEFA Champions League Final.
-
-Scored 118 goals in 173 matches but faced criticism for injuries and off-field issues.
-
-Al Hilal (2023–Present)
-
-Moved to Saudi Pro League for €90 million.
-
-Faces new challenges in a less competitive league but remains a global icon.
-
-International Career (Brazil)
-Debut (2010): Scored on his first appearance for Brazil.
-
-2013 Confederations Cup: Won Golden Ball (Best Player).
-
-2014 World Cup: Carried Brazil’s hopes but suffered a back injury in the quarterfinals.
-
-2016 Olympics: Won gold medal (first for Brazil in football).
-
-2019 Copa América: Won Best Player award.
-
-2022 World Cup: Scored crucial goals but Brazil lost in the quarterfinals.
-
-Record: Brazil’s all-time top scorer (79+ goals), surpassing Pelé.
-
-Playing Style & Legacy
-Strengths: Dribbling, playmaking, flair, free-kicks, and finishing.
-
-Weaknesses: Often criticized for diving, inconsistency, and injuries.
-
-Comparisons: Seen as the heir to Ronaldinho and Pelé but hasn’t won a World Cup.
-
-Ballon d’Or: Best finish – 3rd place (2015, 2017).
-
-Personal Life & Controversies
-Relationships: Dated Carolina Dantas (son Davi Lucca, born 2011), Bruna Marquezine, and currently with model Bruna Biancardi (daughter Mavie, born 2023).
-
-Legal Issues: Faced tax fraud allegations and a high-profile rape case (later dropped).
-
-Extravagant Lifestyle: Known for parties, social media presence, and business ventures.
-
-Net Worth & Endorsements
-Estimated $200 million+ (one of the highest-paid athletes).
-
-Major sponsors: Nike, Puma, Red Bull, EA Sports.
-
-Current Status (2024)
-Neymar continues to play for Al Hilal while recovering from an ACL injury (2023). Despite criticism, he remains a football icon with a massive global fanbase.
-
-        </p>
+                                <div class="book-hover-buttons">
+                                    <!-- Rating display -->
+                                    <?php if (isset($ratings_map[$book['book_id']])): ?>
+                                        <div>Rating: <?= $ratings_map[$book['book_id']] ?> / 5</div>
+                                    <?php endif; ?>
+                                    <button class="btn btn-success">Buy</button>
+                                    <!-- Add rating input -->
+                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#ratingModal" data-book-id="<?= $book['book_id'] ?>">Rate This Book</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <a href="#" class="logo">
-          <img src="image/image.png" alt="logo" />
-        </a>
-        <p>
-          Discover additional travel resources on our website. From travel guides and packing tips to destination insights,
-          our blog is a treasure trove of information to enhance your travel experience.
-        </p>
-      </div>
-
-      <div class="footer-contact">
-        <h4>Contact Us</h4>
-        <p>Feel free to contact and reach us !!</p>
-        <ul>
-          <li><ion-icon name="mail-outline"></ion-icon> <a href="mailto:ghartimagarbishal87@gmail.com">ghartimagarbishal87@gmail.com</a></li>
-          <li><ion-icon name="location-outline"></ion-icon> <address>Battisputali, Kathmandu</address></li>
-        </ul>
-      </div>
-
-      <div class="footer-form">
-        <!-- Optional: Contact form -->
-      </div>
-    </div>
-   
-
-    <div class="footer-bottom">
-      <p>&copy; 2024 <a href="#">edendi</a>. All rights reserved.</p>
-      <ul class="footer-bottom-list">
-        <li><a href="#" class="footer-bottom-link">Privacy Policy</a></li>
-        <li><a href="#" class="footer-bottom-link">Terms & Condition</a></li>
-        <li><a href="#" class="footer-bottom-link">FAQ</a></li>
-      </ul>
-    </div>
-  </footer>
-
-  <!-- Go to Top Button -->
-  <a href="#top" class="go-top">
-    <ion-icon name="chevron-up-outline"></ion-icon>
-  </a>
-
-</body>
-
-</html>
+    <!-- Rating Modal -->
+    <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ratingModalLabel">Rate the Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <

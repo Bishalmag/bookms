@@ -10,7 +10,6 @@ $db_pass = "";
 $db_name = "book_management_system";
 
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
@@ -21,37 +20,115 @@ if (!$conn) {
 <head>
     <title>All Categories</title>
     <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
         .content {
             margin-left: 22%;
             padding: 20px;
         }
-        .center-title {
+
+        h1 {
             text-align: center;
-            margin: 30px 0;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 28px;
         }
-        .category-table {
-            width: 100%;
-            border-collapse: collapse;
+
+        table {
+            width: 95%;
+            margin: 0 auto;
+            border-collapse: separate;
+            border-spacing: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: white;
         }
-        .category-table th, .category-table td {
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: center;
-        }
-        .category-table th {
-            background-color: #28a745;
+
+        thead {
+            background-color: #4a6fa5;
             color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #555;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        a.edit-btn, a.delete-btn {
+            display: inline-block;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        a.edit-btn {
+            background-color: #4a6fa5;
+            color: white;
+            border: 1px solid #3a5a80;
+        }
+
+        a.edit-btn:hover {
+            background-color: #3a5a80;
+        }
+
+        a.delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: 1px solid #c0392b;
+        }
+
+        a.delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .no-books {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            table {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="content">
-    <div class="center-title">
-        <h1>All Categories</h1>
-    </div>
+    <h1>All Categories</h1>
 
-    <table class="category-table">
+    <table>
         <thead>
             <tr>
                 <th>Category ID</th>
@@ -69,11 +146,14 @@ if (!$conn) {
                 echo "<tr>";
                 echo "<td>" . $row['category_id'] . "</td>";
                 echo "<td>" . $row['type'] . "</td>";
-                echo "<td><a href='#'>Edit</a> | <a href='#'>Delete</a></td>";
+                echo "<td class='action-btns'>
+                        <a class='edit-btn' href='editcategory.php?category_id=" . $row['category_id'] . "'>Edit</a>
+                        <a class='delete-btn' href='deletecategory.php?category_id=" . $row['category_id'] . "' onclick='return confirm(\"Are you sure you want to delete this category?\");'>Delete</a>
+                      </td>";
                 echo "</tr>";
             }
         } else {
-            echo "<tr><td colspan='3'>No categories found</td></tr>";
+            echo "<tr><td colspan='3' class='no-books'>No categories found</td></tr>";
         }
 
         mysqli_close($conn);
