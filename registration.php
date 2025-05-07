@@ -30,20 +30,82 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     return false;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Register</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .register-container {
+            width: 400px;
+            margin: 100px auto;
+            background-color: #ffffff;
+            padding: 30px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-left: 8px solid #4a6fa5;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3a5a80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 500px) {
+            .register-container {
+                width: 90%;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>Registration Form</h2>
-  <form action="registration.php" method="POST">
-    <input type="text" name="username" placeholder="Username" required><br><br>
-    <input type="email" name="email" placeholder="Email" required><br><br>
-    <input type="password" name="password" placeholder="Password" required><br><br>
-    <button type="submit">Register</button>
-  </form>
+    <div class="register-container">
+        <h1>Book Management System</h1>
+        <h2>Registration Form</h2>
+        <form action="registration.php" method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+    </div>
 </body>
 </html>

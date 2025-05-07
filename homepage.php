@@ -35,14 +35,14 @@ try {
     
     $params = [];
     
-    // Add search filter if provided
+    // Add search filter 
     if (!empty($search)) {
         $query .= " AND (b.title LIKE ? OR a.name LIKE ?)";
         $params[] = "%$search%";
         $params[] = "%$search%";
     }
     
-    // Add category filter if provided
+    // Add category filter 
     if (!empty($category)) {
         $query .= " AND c.type = ?";
         $params[] = $category;
@@ -159,8 +159,44 @@ try {
     </style>
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Book Management System</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- Check orders button -->
+            <li class="nav-item">
+                    <a class="nav-link text-danger" href="order_history.php">Order History</a>
+                </li>
+               
+
+    <!-- ... existing nav items ... -->
+    <li class="nav-item">
+        <a class="nav-link text-danger" href="cart.php">
+            Cart 
+            <?php if (!empty($_SESSION['cart'])): ?>
+                <span class="badge bg-danger"><?= count($_SESSION['cart']) ?></span>
+            <?php endif; ?>
+        </a>
+    </li>
+
+                <!-- Logout button -->
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="logout.php">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Include Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <div class="container py-5">
-        <h1 class="text-center mb-5">Book Management System</h1>
+       
         
         <?php if ($error): ?>
             <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -245,7 +281,9 @@ try {
                                     <?php if (isset($ratings_map[$book['book_id']])): ?>
                                         <div>Rating: <?= $ratings_map[$book['book_id']] ?> / 5</div>
                                     <?php endif; ?>
-                                    <button class="btn btn-success">Buy</button>
+                                    <a href="cart.php?add_to_cart=<?= $book['book_id'] ?>" class="btn btn-primary">Add to Cart</a>
+
+
                                     <!-- Add rating input -->
                                     <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#ratingModal" data-book-id="<?= $book['book_id'] ?>">Rate This Book</button>
                                 </div>
@@ -265,4 +303,4 @@ try {
                     <h5 class="modal-title" id="ratingModalLabel">Rate the Book</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <
+                

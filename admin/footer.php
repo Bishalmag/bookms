@@ -43,6 +43,6 @@
 
 <!--Footer part start -->
 <div id="footer">
-    <p>&copy; 2024 Book Management System. All rights reserved.</p>
+    <p>&copy; 2025 Book Management System. All rights reserved.</p>
 </div>
 <!--Footer part End -->

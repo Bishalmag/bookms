@@ -110,7 +110,7 @@
     <!-- Header part start -->
     <div id="header">
         <div id="logo">
-            <img src="admin/uploads/image.png" alt="Logo">
+            <img src="uploads/image.png" alt="Logo">
         </div>
         <div id="banner">
             <h1>Book Management System</h1>

@@ -21,7 +21,7 @@
 
         <!-- Logout Button -->
         <li>
-            <form action="/logout.php" method="POST" style="margin: 0;">
+            <form action="../logout.php" method="POST" style="margin: 0;">
                 <button type="submit" class="logout-btn">Logout</button>
             </form>
         </li>
