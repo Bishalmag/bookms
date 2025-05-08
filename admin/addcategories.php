@@ -1,8 +1,8 @@
 <?php 
+require_once 'admin_auth.php';
 if (isset($_POST['add_category'])) {
-    // Retrieve form data
-    $category_id = $_POST['category_id'];
-    $type = $_POST['type'];
+    // Retrieve form data (category_id is auto-incremented)
+    $genre = $_POST['genre'];  // Change 'type' to 'genre'
     $description = $_POST['description'];
 
     // Database connection parameters
@@ -19,12 +19,12 @@ if (isset($_POST['add_category'])) {
         die("Connection Error: " . $conn->connect_error);
     }
 
-    // Prepare SQL statement
-    $sql = "INSERT INTO categories (category_id, type, description) VALUES (?, ?, ?)";
+    // Prepare SQL statement (no need to insert category_id since it's auto incremented)
+    $sql = "INSERT INTO categories (genre, description) VALUES (?, ?)";  // Change 'type' to 'genre'
 
     // Prepare and bind
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("iss", $category_id, $type, $description); // i = int, s = string
+    $stmt->bind_param("ss", $genre, $description);  // Bind genre and description (both are strings)
 
     // Execute
     if ($stmt->execute()) {
@@ -129,11 +129,10 @@ if (isset($_POST['add_category'])) {
     <form method="POST" action="addcategories.php">
         <h2>Add a New Category</h2>
 
-        <label for="category_id">Category ID</label>
-        <input type="number" name="category_id" required>
-
-        <label for="type">Type</label>
-        <input type="text" name="type" required>
+        <!-- Remove category_id input field, it's auto-incremented by the database -->
+        
+        <label for="genre">Genre</label> <!-- Changed label from "Type" to "Genre" -->
+        <input type="text" name="genre" required> <!-- Changed input name from "type" to "genre" -->
 
         <label for="description">Description</label>
         <input type="text" name="description" required>

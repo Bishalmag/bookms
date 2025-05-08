@@ -1,5 +1,6 @@
 <?php
 session_start();
+include('header.php');
 
 // Database configuration
 $host = 'localhost';
@@ -228,3 +229,4 @@ textarea {
 </div>
 </body>
 </html>
+<?php include 'footer.php'; ?> 

@@ -1,130 +1,164 @@
 <!-- sidebar.php -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <div id="sidebar">
-    <ol>
-        <!-- Author Dropdown -->
+    <div class="sidebar-header">📚 Admin Panel</div>
+    <ul class="sidebar-menu">
+        <!-- Books -->
         <li>
-            <button onclick="toggleDropdown('authorDropdown')">Authors ▾</button>
-            <div id="authorDropdown" class="dropdown" style="display: none;">
-                <a href="addauthors.php">Add Author</a>
-                <a href="allauthors.php">All Authors</a>
+            <button onclick="toggleDropdown('bookDropdown')" class="dropdown-btn">
+                <i class="fas fa-book"></i> Books <i class="fas fa-chevron-down arrow-icon"></i>
+            </button>
+            <div id="bookDropdown" class="dropdown">
+                <a href="addbook.php"><i class="fas fa-plus-circle"></i> Add Book</a>
+                <a href="allbook.php"><i class="fas fa-list"></i> All Books</a>
             </div>
         </li>
 
-        <!-- Categories Dropdown -->
+        <!-- Authors -->
         <li>
-            <button onclick="toggleDropdown('categoryDropdown')">Categories ▾</button>
-            <div id="categoryDropdown" class="dropdown" style="display: none;">
-                <a href="addcategories.php">Add Category</a>
-                <a href="allcategories.php">All Categories</a>
+            <button onclick="toggleDropdown('authorDropdown')" class="dropdown-btn">
+                <i class="fas fa-user-edit"></i> Authors <i class="fas fa-chevron-down arrow-icon"></i>
+            </button>
+            <div id="authorDropdown" class="dropdown">
+                <a href="addauthors.php"><i class="fas fa-plus-circle"></i> Add Author</a>
+                <a href="allauthors.php"><i class="fas fa-list"></i> All Authors</a>
             </div>
         </li>
 
-        <!-- Logout Button -->
+        <!-- Categories -->
         <li>
-            <form action="../logout.php" method="POST" style="margin: 0;">
-                <button type="submit" class="logout-btn">Logout</button>
+            <button onclick="toggleDropdown('categoryDropdown')" class="dropdown-btn">
+                <i class="fas fa-layer-group"></i> Categories <i class="fas fa-chevron-down arrow-icon"></i>
+            </button>
+            <div id="categoryDropdown" class="dropdown">
+                <a href="addcategories.php"><i class="fas fa-plus-circle"></i> Add Category</a>
+                <a href="allcategories.php"><i class="fas fa-list"></i> All Categories</a>
+            </div>
+        </li>
+
+        
+        <!-- Logout -->
+        <li>
+            <form action="../logout.php" method="POST">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </form>
         </li>
-    </ol>
+    </ul>
 </div>
 
-<!-- JavaScript for Dropdowns -->
 <script>
     function toggleDropdown(id) {
         const dropdown = document.getElementById(id);
-        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        dropdown.classList.toggle('show');
+        dropdown.previousElementSibling.querySelector('.arrow-icon').classList.toggle('rotate');
     }
 </script>
 
-<!-- CSS for Sidebar and Dropdowns -->
 <style>
-    /* Sidebar Styles */
     #sidebar {
-        background-color: #f4f4f4; /* Light background color */
-        color: #333;
-        padding: 20px;
+        background-color: #2c3e50;
+        color: #ecf0f1;
         width: 250px;
         height: 100vh;
         position: fixed;
         top: 0;
         left: 0;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
         z-index: 1000;
     }
 
-    #sidebar ol {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
+    .sidebar-header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 30px;
+        text-align: center;
+        color: #fff;
     }
 
-    #sidebar li {
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+    }
+
+    .sidebar-menu li {
         margin-bottom: 15px;
     }
 
-    #sidebar button {
-        background-color: #4a6fa5;
-        color: white;
+    .dropdown-btn {
+        background: none;
         border: none;
-        border-radius: 6px;
-        padding: 12px;
+        color: #ecf0f1;
+        padding: 12px 15px;
         width: 100%;
-        font-weight: 600;
         text-align: left;
+        font-size: 16px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 5px;
+        transition: background 0.3s;
     }
 
-    #sidebar button:hover {
-        background-color: #3a5a80;
-        transform: translateY(-2px);
+    .dropdown-btn:hover {
+        background-color: #34495e;
+    }
+
+    .dropdown {
+        display: none;
+        margin-top: 5px;
+    }
+
+    .dropdown.show {
+        display: block;
     }
 
     .dropdown a {
         display: block;
-        background-color: #3a5a80;
-        padding: 10px;
-        margin-top: 5px;
+        padding: 10px 20px;
+        color: #ecf0f1;
         text-decoration: none;
-        color: white;
-        border-radius: 5px;
         font-size: 14px;
-        text-align: left;
+        transition: background 0.3s;
     }
 
     .dropdown a:hover {
-        background-color: #2c487a;
+        background-color: #3d566e;
     }
 
-    /* Logout Button */
+    .arrow-icon {
+        transition: transform 0.3s;
+    }
+
+    .arrow-icon.rotate {
+        transform: rotate(180deg);
+    }
+
     .logout-btn {
         background-color: #e74c3c;
         color: white;
-        padding: 12px;
-        width: 100%;
-        font-weight: 600;
         border: none;
-        border-radius: 6px;
+        padding: 12px 15px;
+        width: 100%;
+        font-size: 16px;
+        border-radius: 5px;
         cursor: pointer;
-        text-align: left;
     }
 
     .logout-btn:hover {
         background-color: #c0392b;
     }
 
-    /* Responsive styles */
     @media (max-width: 768px) {
         #sidebar {
+            position: relative;
             width: 100%;
             height: auto;
-            position: relative;
             padding: 15px;
-        }
-
-        #sidebar button,
-        .dropdown a {
-            font-size: 14px;
         }
     }
 </style>

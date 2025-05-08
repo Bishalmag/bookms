@@ -1,5 +1,7 @@
 <?php
 session_start();
+include('header.php');
+
 
 // Database connection (move this to the top)
 $conn = mysqli_connect("localhost", "root", "", "book_management_system");
@@ -206,13 +208,13 @@ if (isset($_POST['update_cart'])) {
             margin-top: 30px;
         }
         
-        .btn-continue, .btn-checkout {
+        .btn-cart, .btn-checkout {
             padding: 12px 25px;
             border-radius: 6px;
             font-weight: 600;
         }
         
-        .btn-continue {
+        .btn-cart {
             background-color: #6c757d;
             color: white;
         }
@@ -313,10 +315,11 @@ if (isset($_POST['update_cart'])) {
                     </div>
                     
                     <div class="cart-actions">
-                        <a href="homepage.php" class="btn btn-continue">Continue Shopping</a>
+                        <a href="homepage.php" class="btn btn-cart">Continue Shopping</a>
                         <div>
-                            <button type="submit" name="update_cart" class="btn btn-update">Update Cart</button>
-                            <a href="checkout.php" class="btn btn-checkout">Proceed to Checkout</a>
+                            <button type="submit" name="update_cart" class="btn btn-cart">Update Cart</button>
+                            <a href="clearcart.php" class="btn btn-cart">Clear Cart</a>
+                            <a href="checkout.php" class="btn btn-cart">Proceed to Checkout</a>
                         </div>
                     </div>
                 </form>
@@ -326,9 +329,12 @@ if (isset($_POST['update_cart'])) {
                     <a href="homepage.php" class="btn btn-continue" style="margin-top: 20px;">Browse Books</a>
                 </div>
             <?php endif; ?>
+           
         </div>
     </div>
+    
 </body>
 </html>
 
 <?php mysqli_close($conn); ?>
+<?php include 'footer.php'; ?>  

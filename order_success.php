@@ -1,6 +1,6 @@
 <?php
 session_start();
-
+include('header.php');
 
 // Redirect if coming directly without a successful order
 if (!isset($_SESSION['order_success'])) {
@@ -122,7 +122,8 @@ unset($_SESSION['order_success']);
             
         </div>
     </div>
-    unset($_SESSION['cart']);
-    <?php include('footer.php'); ?>
+   
+    
 </body>
 </html>
+<?php include('footer.php'); ?>

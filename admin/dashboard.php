@@ -2,6 +2,7 @@
 require_once 'admin_auth.php';
 include('header.php');
 include('sidebar.php');
+
 // Database connection
 $db_host = "localhost";
 $db_user = "root";
@@ -13,201 +14,332 @@ $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
+
+// Get all statistics
+$total_books = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM books"))['total'];
+$total_authors = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM authors"))['total'];
+$total_categories = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM categories"))['total'];
+$total_orders = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM orders"))['total'];
+$total_users = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM users"))['total'];
+//$available_books = mysqli_fetch_assoc(mysqli_query($conn, "SELECT SUM(copies_available) as total FROM books"))['total'];
+$out_of_stock = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM books WHERE copies_available = 0"))['total'];
+
+// Get recent orders
+$recent_orders = mysqli_query($conn, "SELECT o.order_id, u.username, o.total_amount, o.date 
+                                     FROM orders o JOIN users u ON o.user_id = u.id 
+                                     ORDER BY o.date DESC LIMIT 5");
+
+// Get popular books
+$popular_books = mysqli_query($conn, "SELECT b.title, COUNT(oi.order_id) as orders 
+                                     FROM order_items oi JOIN books b ON oi.book_id = b.book_id 
+                                     GROUP BY b.title ORDER BY orders DESC LIMIT 5");
+
+mysqli_close($conn);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>All Books</title>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #3a5a80;
+            --danger-color: #e74c3c;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+            --text-color: #495057;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
+            background-color: #f5f7fa;
             margin: 0;
-            padding: 20px;
+            color: var(--text-color);
         }
 
-        .center-title {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 28px;
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            transition: margin-left 0.3s;
         }
 
-        .book-list {
-            margin-left: 22%;
-            padding: 20px;
-        }
-
-        table {
-            width: 95%;
-            margin: 0 auto;
-            border-collapse: separate;
-            border-spacing: 0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            background-color: white;
-        }
-
-        thead {
-            background-color: #4a6fa5;
-            color: white;
-        }
-
-        th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #e0e0e0;
-            color: #555;
-            text-align: center;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        img {
-            max-width: 100px;
-            max-height: 100px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-btns {
+        .dashboard-header {
             display: flex;
-            gap: 8px;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
-        a.edit-btn, a.delete-btn {
-            display: inline-block;
-            padding: 8px 12px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
+        .page-title {
+            font-size: 28px;
+            color: var(--dark-gray);
+            font-weight: 600;
+            margin: 0;
         }
 
-        a.edit-btn {
-            background-color: #4a6fa5;
-            color: white;
-            border: 1px solid #3a5a80;
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
-        a.edit-btn:hover {
-            background-color: #3a5a80;
-        }
-
-        a.delete-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: 1px solid #c0392b;
-        }
-
-        a.delete-btn:hover {
-            background-color: #c0392b;
-        }
-
-        .no-books {
-            text-align: center;
-            color: #777;
-            font-style: italic;
+        .stat-card {
+            background: white;
+            border-radius: 10px;
             padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 5px;
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .books-available .card-icon { color: var(--success-color); }
+        .books-out .card-icon { color: var(--danger-color); }
+        .total-orders .card-icon { color: var(--warning-color); }
+        .total-users .card-icon { color: var(--info-color); }
+
+        .card-footer {
+            font-size: 12px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-footer i {
+            margin-left: 5px;
+        }
+
+        .dashboard-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         @media (max-width: 1200px) {
-            table {
-                width: 100%;
+            .dashboard-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .data-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-title {
+            font-weight: 500;
+        }
+
+        .item-value {
+            font-weight: 600;
+        }
+
+        .view-all {
+            text-align: right;
+            margin-top: 15px;
+        }
+
+        .view-all a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .view-all a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stats-container {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
 
-<div class="book-list">
-    <h1 class="center-title">All Books</h1>
+<div class="main-content">
+    <div class="dashboard-header">
+        <h1 class="page-title">Dashboard</h1>
+        <div class="breadcrumb">Admin</div>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Book ID</th>
-                <th>Title</th>
-                <th>ISBN</th>
-                <th>Price</th>
-                <th>Author</th>
-                <th>Category</th>
-                <th>Publication Year</th>
-                <th>Publisher</th>
-                <th>Copies Available</th>
-                <th>Total Copies</th>
-                <th>Image</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            $sql = "SELECT 
-                        b.book_id,
-                        b.title,
-                        b.isbn,
-                        b.price,
-                        a.name AS author_name,
-                        c.type AS category,
-                        b.publication_year,
-                        b.publisher,
-                        b.copies_available,
-                        b.total_copies,
-                        b.image
-                    FROM books b
-                    JOIN authors a ON b.author_id = a.author_id
-                    JOIN categories c ON b.category_id = c.category_id";
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="card-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="card-title">Total Books</div>
+            <div class="card-value"><?= $total_books ?></div>
+            <div class="card-footer">
+                <a href="allbook.php">View all books</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+<!-- 
+        <div class="stat-card books-available">
+            <div class="card-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="card-title">Books Available</div>
+            <div class="card-value"><?= $available_books ?></div>
+            <div class="card-footer">
+                <a href="books.php?filter=available">View available</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div> -->
 
-            $result = mysqli_query($conn, $sql);
+        <div class="stat-card books-out">
+            <div class="card-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="card-title">Out of Stock</div>
+            <div class="card-value"><?= $out_of_stock ?></div>
+            <div class="card-footer">
+                <a href="out_of_stock.php?filter=outofstock">View out of stock</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
 
-            if (mysqli_num_rows($result) > 0) {
-                while($row = mysqli_fetch_assoc($result)) {
-                    echo "<tr>";
-                    echo "<td>" . $row['book_id'] . "</td>";
-                    echo "<td>" . $row['title'] . "</td>";
-                    echo "<td>" . $row['isbn'] . "</td>";
-                    echo "<td>" . $row['price'] . "</td>";
-                    echo "<td>" . $row['author_name'] . "</td>";
-                    echo "<td>" . $row['category'] . "</td>";
-                    echo "<td>" . $row['publication_year'] . "</td>";
-                    echo "<td>" . $row['publisher'] . "</td>";
-                    echo "<td>" . $row['copies_available'] . "</td>";
-                    echo "<td>" . $row['total_copies'] . "</td>";
-                    echo "<td>";
-                    if (!empty($row['image'])) {
-                        echo "<img src='uploads/" . $row['image'] . "' alt='Book Image'>";
-                    } else {
-                        echo "No Image";
-                    }
-                    echo "</td>";
-                    echo "<td class='action-btns'>
-                            <a class='edit-btn' href='editbook.php?book_id=" . $row['book_id'] . "'>Edit</a>
-                            <a class='delete-btn' href='deletebook.php?book_id=" . $row['book_id'] . "' onclick=\"return confirm('Are you sure you want to delete this book?');\">Delete</a>
-                          </td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='12' class='no-books'>No books found</td></tr>";
-            }
+        <div class="stat-card">
+            <div class="card-icon">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="card-title">Authors</div>
+            <div class="card-value"><?= $total_authors ?></div>
+            <div class="card-footer">
+                <a href="allauthors.php">View all authors</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
 
-            mysqli_close($conn);
-            ?>
-        </tbody>
-    </table>
+        <div class="stat-card total-orders">
+            <div class="card-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="card-title">Total Orders</div>
+            <div class="card-value"><?= $total_orders ?></div>
+            <div class="card-footer">
+                <a href="allorder.php">View all orders</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+
+        <div class="stat-card total-users">
+            <div class="card-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="card-title">Registered Users</div>
+            <div class="card-value"><?= $total_users ?></div>
+            <div class="card-footer">
+                <a href="allusers.php">View all users</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <div class="data-card">
+            <h3 class="section-title">Recent Orders</h3>
+            <ul class="data-list">
+                <?php while($order = mysqli_fetch_assoc($recent_orders)): ?>
+                <li class="data-item">
+                    <span class="item-title">Order #<?= $order['order_id'] ?> by <?= $order['username'] ?></span>
+                    <span class="item-value">$<?= number_format($order['total_amount'], 2) ?></span>
+                </li>
+                <?php endwhile; ?>
+            </ul>
+            <div class="view-all">
+                <a href="allorder.php">View all orders <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+
+        <div class="data-card">
+            <h3 class="section-title">Popular Books</h3>
+            <ul class="data-list">
+                <?php while($book = mysqli_fetch_assoc($popular_books)): ?>
+                <li class="data-item">
+                    <span class="item-title"><?= $book['title'] ?></span>
+                    <span class="item-value"><?= $book['orders'] ?> orders</span>
+                </li>
+                <?php endwhile; ?>
+            </ul>
+            <div class="view-all">
+                <a href="allbooks.php?sort=popular">View all books <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php include('footer.php'); ?>

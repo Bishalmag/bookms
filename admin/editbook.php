@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'admin_auth.php';
 
 // Database connection
 $conn = mysqli_connect("localhost", "root", "", "book_management_system");
@@ -31,42 +31,46 @@ $book = $result->fetch_assoc();
 
 // Handle form submission
 if (isset($_POST['update_book'])) {
-    $title = $_POST['title'];
-    $isbn = $_POST['isbn'];
+    $title = trim($_POST['title']);
+    $isbn = trim($_POST['isbn']);
     $author_id = $_POST['author_id'];
     $category_id = $_POST['category_id'];
     $publication_year = $_POST['publication_year'];
-    $publisher = $_POST['publisher'];
+    $publisher = trim($_POST['publisher']);
     $copies_available = $_POST['copies_available'];
-    $price = $_POST['price']; // Add price to the form data
+    $price = $_POST['price'];
 
-    // Default to existing image
-    $image = $book['image'];
+    // Validate publisher field
+    if (empty($publisher) || $publisher === '0') {
+        echo "<script>alert('Publisher cannot be empty or zero!');</script>";
+    } else {
+        // Default to existing image
+        $image = $book['image'];
 
-    // Check if a new image is uploaded
-    if (!empty($_FILES['image']['name'])) {
-        $image = $_FILES['image']['name'];
-        $tmp = $_FILES['image']['tmp_name'];
-        $upload_dir = "uploads/";
+        // Check if a new image is uploaded
+        if (!empty($_FILES['image']['name'])) {
+            $image = $_FILES['image']['name'];
+            $tmp = $_FILES['image']['tmp_name'];
+            $upload_dir = "uploads/";
 
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            move_uploaded_file($tmp, $upload_dir . $image);
         }
 
-        move_uploaded_file($tmp, $upload_dir . $image);
-    }
+        // SQL update
+        $update_sql = "UPDATE books SET title = ?, isbn = ?, price = ?, author_id = ?, category_id = ?, publication_year = ?, publisher = ?, copies_available = ?, image = ? WHERE book_id = ?";
+        $stmt = $conn->prepare($update_sql);
+        $stmt->bind_param("ssdiisssss", $title, $isbn, $price, $author_id, $category_id, $publication_year, $publisher, $copies_available, $image, $book_id);
 
-    // SQL update (with image)
-    $update_sql = "UPDATE books SET title = ?, isbn = ?, price = ?, author_id = ?, category_id = ?, publication_year = ?, publisher = ?, copies_available = ?, image = ? WHERE book_id = ?";
-    $stmt = $conn->prepare($update_sql);
-    // Bind parameters correctly (price is a float - d)
-    $stmt->bind_param("ssdiisisss", $title, $isbn, $price, $author_id, $category_id, $publication_year, $publisher, $copies_available, $image, $book_id);
-
-    if ($stmt->execute()) {
-        echo "<script>alert('Book updated successfully!'); window.location.href = 'allbook.php';</script>";
-        exit();
-    } else {
-        echo "Error updating book: " . $conn->error;
+        if ($stmt->execute()) {
+            echo "<script>alert('Book updated successfully!'); window.location.href = 'allbook.php';</script>";
+            exit();
+        } else {
+            echo "<script>alert('Error updating book: " . addslashes($conn->error) . "');</script>";
+        }
     }
 }
 ?>
@@ -89,66 +93,84 @@ if (isset($_POST['update_book'])) {
             width: 50%;
             margin: 20px auto;
             background-color: #fff;
-            padding: 20px;
+            padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         h2 {
             text-align: center;
-            color: #333;
+            color: #2c3e50;
             margin-bottom: 30px;
             font-size: 28px;
         }
 
+        .form-group {
+            margin-bottom: 20px;
+        }
+
         label {
             display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
-            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
         }
 
         input, select {
             width: 100%;
             padding: 12px;
-            margin: 8px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
             font-size: 16px;
-            color: #333;
+            transition: border-color 0.3s;
         }
 
-        input[type="submit"] {
-            background-color: #28a745;
+        input:focus, select:focus {
+            border-color: #4a6fa5;
+            outline: none;
+        }
+
+        .btn-submit {
+            background-color: #4a6fa5;
             color: white;
+            padding: 12px 20px;
             border: none;
+            border-radius: 6px;
+            font-size: 16px;
             cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
             transition: background-color 0.3s;
         }
 
-        input[type="submit"]:hover {
-            background-color: #218838;
+        .btn-submit:hover {
+            background-color: #3a5a80;
         }
 
-        img {
+        .book-image {
+            max-width: 150px;
+            max-height: 200px;
+            border-radius: 4px;
             margin: 10px 0;
-            max-width: 120px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .form-container input[type="file"] {
-            padding: 5px;
-            background-color: #f8f8f8;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+        .file-input {
+            padding: 8px;
+            background-color: #f8f9fa;
         }
 
-        .form-container p {
-            font-style: italic;
-            color: #777;
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
         }
 
-        .form-container select {
-            cursor: pointer;
+        @media (max-width: 768px) {
+            .form-container {
+                width: 90%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -157,61 +179,78 @@ if (isset($_POST['update_book'])) {
 <div class="form-container">
     <h2>Edit Book</h2>
     <form method="POST" enctype="multipart/form-data">
-        <label for="title">Title</label>
-        <input type="text" name="title" value="<?php echo $book['title']; ?>" required>
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" name="title" value="<?php echo htmlspecialchars($book['title']); ?>" required>
+        </div>
 
-        <label for="isbn">ISBN</label>
-        <input type="text" name="isbn" value="<?php echo $book['isbn']; ?>" required>
+        <div class="form-group">
+            <label for="isbn">ISBN</label>
+            <input type="text" name="isbn" value="<?php echo htmlspecialchars($book['isbn']); ?>" required>
+        </div>
 
-        <label for="price">Price</label>
-        <input type="number" step="0.01" name="price" value="<?php echo $book['price']; ?>" required>
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" step="0.01" min="0" name="price" value="<?php echo htmlspecialchars($book['price']); ?>" required>
+        </div>
 
-        <label for="author_id">Author</label>
-        <select name="author_id" required>
-            <?php
-            $authors = mysqli_query($conn, "SELECT * FROM authors");
-            while ($author = mysqli_fetch_assoc($authors)) {
-                $selected = ($book['author_id'] == $author['author_id']) ? 'selected' : '';
-                echo "<option value='{$author['author_id']}' $selected>{$author['name']}</option>";
-            }
-            ?>
-        </select>
+        <div class="form-group">
+            <label for="author_id">Author</label>
+            <select name="author_id" required>
+                <?php
+                $authors = mysqli_query($conn, "SELECT * FROM authors");
+                while ($author = mysqli_fetch_assoc($authors)) {
+                    $selected = ($book['author_id'] == $author['author_id']) ? 'selected' : '';
+                    echo "<option value='".htmlspecialchars($author['author_id'])."' $selected>".htmlspecialchars($author['name'])."</option>";
+                }
+                ?>
+            </select>
+        </div>
 
-        <label for="category_id">Category</label>
-        <select name="category_id" required>
-            <?php
-            $categories = mysqli_query($conn, "SELECT * FROM categories");
-            while ($category = mysqli_fetch_assoc($categories)) {
-                $selected = ($book['category_id'] == $category['category_id']) ? 'selected' : '';
-                echo "<option value='{$category['category_id']}' $selected>{$category['type']}</option>";
-            }
-            ?>
-        </select>
+        <div class="form-group">
+            <label for="category_id">Genre</label>
+            <select name="category_id" required>
+                <?php
+                $categories = mysqli_query($conn, "SELECT * FROM categories");
+                while ($category = mysqli_fetch_assoc($categories)) {
+                    $selected = ($category['category_id'] == $book['category_id']) ? 'selected' : '';
+                    echo "<option value='".htmlspecialchars($category['category_id'])."' $selected>".htmlspecialchars($category['genre'])."</option>";
+                }
+                ?>
+            </select>
+        </div>
 
-        <label for="publication_year">Publication Year</label>
-        <input type="number" name="publication_year" value="<?php echo $book['publication_year']; ?>" required>
+        <div class="form-group">
+            <label for="publication_year">Publication Year</label>
+            <input type="number" min="1000" max="<?php echo date('Y'); ?>" name="publication_year" value="<?php echo htmlspecialchars($book['publication_year']); ?>" required>
+        </div>
 
-        <label for="publisher">Publisher</label>
-        <input type="text" name="publisher" value="<?php echo $book['publisher']; ?>" required>
+        <div class="form-group">
+            <label for="publisher">Publisher</label>
+            <input type="text"  name="publisher" value="<?php echo htmlspecialchars($book['publisher']); ?>" required>
+        </div>
 
-        <label for="copies_available">Copies Available</label>
-        <input type="number" name="copies_available" value="<?php echo $book['copies_available']; ?>" required>
+        <div class="form-group">
+            <label for="copies_available">Copies Available</label>
+            <input type="number" min="0" name="copies_available" value="<?php echo htmlspecialchars($book['copies_available']); ?>" required>
+        </div>
 
-        <label for="current_image">Current Image</label><br>
-        <?php if (!empty($book['image'])): ?>
-            <img src="uploads/<?php echo $book['image']; ?>" alt="Book Image">
-        <?php else: ?>
-            <p>No image uploaded.</p>
-        <?php endif; ?>
+        <div class="form-group">
+            <label for="current_image">Current Image</label><br>
+            <?php if (!empty($book['image']) && file_exists("uploads/".$book['image'])): ?>
+                <img src="uploads/<?php echo htmlspecialchars($book['image']); ?>" class="book-image" alt="Book Cover">
+            <?php else: ?>
+                <p>No image available</p>
+            <?php endif; ?>
+        </div>
 
-        <label for="image">Upload New Image (optional)</label>
-        <input type="file" name="image" accept="image/*">
+        <div class="form-group">
+            <label for="image">Upload New Image (optional)</label>
+            <input type="file" name="image" class="file-input" accept="image/*">
+        </div>
 
-        <input type="submit" name="update_book" value="Update Book">
+        <button type="submit" name="update_book" class="btn-submit">Update Book</button>
     </form>
 </div>
-
-</body>
-</html>
 
 <?php mysqli_close($conn); ?>

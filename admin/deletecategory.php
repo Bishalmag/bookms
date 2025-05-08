@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'admin_auth.php';
 
 // Database connection
 $conn = new mysqli("localhost", "root", "", "book_management_system");

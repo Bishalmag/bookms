@@ -1,4 +1,6 @@
 <?php
+include 'header.php';
+
 // Database configuration for XAMPP
 $host = 'localhost';
 $dbname = 'book_management_system';
@@ -27,7 +29,7 @@ try {
                 b.copies_available,
                 b.total_copies,
                 b.image,
-                c.type AS category
+                c.genre AS category
               FROM books b
               JOIN authors a ON b.author_id = a.author_id
               JOIN categories c ON b.category_id = c.category_id
@@ -44,7 +46,7 @@ try {
     
     // Add category filter 
     if (!empty($category)) {
-        $query .= " AND c.type = ?";
+        $query .= " AND c.genre = ?";
         $params[] = $category;
     }
     
@@ -68,6 +70,7 @@ try {
 } catch(PDOException $e) {
     $error = "Database error: " . $e->getMessage();
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -159,38 +162,7 @@ try {
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Book Management System</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <!-- Check orders button -->
-            <li class="nav-item">
-                    <a class="nav-link text-danger" href="order_history.php">Order History</a>
-                </li>
-               
 
-    <!-- ... existing nav items ... -->
-    <li class="nav-item">
-        <a class="nav-link text-danger" href="cart.php">
-            Cart 
-            <?php if (!empty($_SESSION['cart'])): ?>
-                <span class="badge bg-danger"><?= count($_SESSION['cart']) ?></span>
-            <?php endif; ?>
-        </a>
-    </li>
-
-                <!-- Logout button -->
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="logout.php">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
 
 <!-- Include Bootstrap JS and dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -295,12 +267,19 @@ try {
         <?php endif; ?>
     </div>
 
-    <!-- Rating Modal -->
-    <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+       <!-- Rating Modal -->
+       <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="ratingModalLabel">Rate the Book</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <!-- Modal body and form goes here -->
+            </div>
+        </div>
+    </div>
+
+<?php include 'footer.php'; ?>  <!-- ✅ Correct placement -->
+
                 

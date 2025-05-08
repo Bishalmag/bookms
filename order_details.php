@@ -1,5 +1,6 @@
 <?php
 session_start();
+include('header.php');
 
 // Database configuration
 $host = 'localhost';

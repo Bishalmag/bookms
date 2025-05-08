@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'admin_auth.php';
 include('header.php');
 include('sidebar.php');
 
@@ -42,6 +42,7 @@ $result = mysqli_query($conn, $sql);
             border-radius: 10px;
             overflow: hidden;
             background-color: white;
+            margin-left: 19%;
         }
         
         thead {
@@ -50,18 +51,19 @@ $result = mysqli_query($conn, $sql);
         }
         
         th {
-            padding: 15px;
+            padding: 10px 12px; /* Reduced padding */
             text-align: left;
             font-weight: 600;
             position: sticky;
             top: 0;
         }
-        
+
         td {
-            padding: 12px 15px;
+            padding: 10px 12px; /* Reduced padding */
             border-bottom: 1px solid #e0e0e0;
             color: #555;
         }
+
         
         tr:last-child td {
             border-bottom: none;
@@ -78,15 +80,25 @@ $result = mysqli_query($conn, $sql);
         }
         
         a.edit-btn, a.delete-btn {
-            display: inline-block;
-            padding: 8px 12px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
+           display: inline-block;
+           padding: 6px 10px; /* Reduced padding */
+           text-decoration: none;
+           border-radius: 5px;
+           font-size: 14px;
+           font-weight: 500;
+           text-align: center;
+           transition: all 0.3s ease;
+           margin: 0 5px; /* Space between buttons */
         }
+
+        td.action-btns {
+           display: flex;
+           justify-content: center; /* Centers the buttons horizontally */
+           align-items: center; /* Centers the buttons vertically */
+           height: 100%; /* Ensure the cell takes full height */
+        }
+
+
         
         a.edit-btn {
             background-color: #4a6fa5;
@@ -162,7 +174,7 @@ $result = mysqli_query($conn, $sql);
                 </tr>
             <?php } ?>
         <?php } else { ?>
-            <tr><td colspan="11" class="no-books">No books found in the database</td></tr>
+            <tr><td colspan="11" class="no-books">No books available</td></tr>
         <?php } ?>
     </tbody>
 </table>
@@ -171,3 +183,4 @@ $result = mysqli_query($conn, $sql);
 </html>
 
 <?php mysqli_close($conn); ?>
+<?php include('footer.php'); ?>

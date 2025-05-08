@@ -1,5 +1,6 @@
 <?php
 session_start();
+include('header.php');
 include('db.php');
 // Check if cart exists and has items
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
@@ -14,6 +15,7 @@ if (isset($_GET['payment_success'])) {
     unset($_SESSION['cart']);
     header('Location: order_history.php');
     exit();
+    unset($_SESSION['cart']);
 }
 
 // Fetch cart items from database
@@ -275,16 +277,13 @@ $total = array_reduce($_SESSION['cart'], fn($sum, $item) => $sum + ($item['price
 <body>
     <div class="content">
         <div class="checkout-container">
-            <h1>Checkout</h1>
+            <h1>Payment</h1>
             
             <div class="checkout-columns">
                 <div class="checkout-form">
-                    <h2>Shipping Information</h2>
+                    <h2>Payment Method</h2>
                     <form method="POST" id="checkoutForm">
-                        <div class="form-group">
-                            <label for="shipping_address">Shipping Address</label>
-                            <textarea id="shipping_address" name="shipping_address" required></textarea>
-                        </div>
+                      
                         
                         <div class="form-group">
                         <select id="payment_method" name="payment_method" required>
@@ -304,7 +303,7 @@ $total = array_reduce($_SESSION['cart'], fn($sum, $item) => $sum + ($item['price
                     <?php foreach ($_SESSION['cart'] as $book_id => $item): ?>
                         <div class="order-item">
                             <?php if (!empty($item['image'])): ?>
-                                <img src="uploads/<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" class="order-item-image">
+                                <img src="admin/uploads/<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" class="order-item-image">
                             <?php endif; ?>
                             <div class="order-item-details">
                                 <div class="order-item-title"><?= htmlspecialchars($item['title']) ?></div>
@@ -395,3 +394,4 @@ $total = array_reduce($_SESSION['cart'], fn($sum, $item) => $sum + ($item['price
     </script>
 </body>
 </html>
+<?php include('footer.php'); ?>

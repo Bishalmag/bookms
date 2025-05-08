@@ -1,5 +1,6 @@
 <?php
 session_start();
+include('header.php');
 
 // Database configuration
 $host = 'localhost';
@@ -199,11 +200,11 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
             
-            <!-- Added button to go to the homepage -->
-            <a href="homepage.php" class="home-button">Go to Homepage</a>
+          
         </div>
     </div>
 
-    <?php include('footer.php'); ?>
+  
 </body>
 </html>
+<?php include('footer.php'); ?>

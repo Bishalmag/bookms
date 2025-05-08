@@ -1,7 +1,7 @@
 <?php 
+require_once 'admin_auth.php';
 if (isset($_POST['authors'])) {
-    // Retrieve form data
-    $author_id = $_POST['author_id'];
+    // Retrieve form data (no need for author_id as it's auto-incremented)
     $name = $_POST['name'];
 
     // Database connection parameters
@@ -18,12 +18,12 @@ if (isset($_POST['authors'])) {
         die("Connection Error: " . $conn->connect_error);
     }
 
-    // Prepare SQL statement
-    $sql = "INSERT INTO authors (author_id, name) VALUES (?, ?)";
+    // Prepare SQL statement (no need to insert author_id as it's auto-incremented)
+    $sql = "INSERT INTO authors (name) VALUES (?)";
 
     // Prepare and bind
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("is", $author_id, $name); // i = int, s = string
+    $stmt->bind_param("s", $name); // s = string for name
 
     // Execute
     if ($stmt->execute()) {
@@ -39,7 +39,6 @@ if (isset($_POST['authors'])) {
     $stmt->close();
     $conn->close();
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -136,11 +135,6 @@ if (isset($_POST['authors'])) {
     <div class="container">
         <h2>Add a New Author</h2>
         <form method="POST" action="addauthors.php">
-            <div class="form-group">
-                <label for="author_id">Author ID</label>
-                <input type="number" name="author_id" required>
-            </div>
-
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" name="name" required>

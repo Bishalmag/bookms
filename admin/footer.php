@@ -9,6 +9,7 @@
         box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         position: relative;
         z-index: 800;
+        margin-left: 18.5%;
     }
 
     #footer p {
