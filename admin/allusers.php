@@ -1,5 +1,5 @@
 <?php
-require_once 'admin_auth.php';
+
 include('header.php');
 include('sidebar.php');
 // Step 1: Connect to the database

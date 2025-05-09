@@ -1,6 +1,4 @@
 <?php
-require_once 'admin_auth.php';
-
 // Database connection parameters
 $servername   = "localhost";
 $username     = "root";
@@ -209,5 +207,7 @@ $conn->close();
 
         <input type="submit" name="books" value="Add Book">
     </form>
+
+
 </body>
 </html>

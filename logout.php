@@ -1,13 +1,13 @@
 <?php
-session_start(); // Start the session
-
-// Unset all session variables
+session_start();
 $_SESSION = [];
-
-// Destroy the session
 session_destroy();
 
-// Redirect to the login page or any other page after logout
-header("Location: login.php"); // Change "login.php" to the appropriate URL
+// Prevents caching
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
+
+header("Location: login.php");
 exit();
 ?>

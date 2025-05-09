@@ -1,5 +1,4 @@
 <?php 
-require_once 'admin_auth.php';
 if (isset($_POST['authors'])) {
     // Retrieve form data (no need for author_id as it's auto-incremented)
     $name = $_POST['name'];

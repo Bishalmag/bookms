@@ -25,17 +25,13 @@ function checkCredentials($email, $password, $userType) {
         if ($password === $dbPassword) {
             $_SESSION['logged_in'] = true;
             $_SESSION['email'] = $dbEmail;
-            $_SESSION['user_id'] = $user_id; // ✅ Needed for checkout
+            $_SESSION['user_id'] = $user_id;
             $_SESSION['user_type'] = $userType;
 
             $stmt->close();
             $conn->close();
             return true;
-        } else {
-            echo "Password did not match<br>";
         }
-    } else {
-        echo "No user found with the provided email.<br>";
     }
 
     $stmt->close();
@@ -43,6 +39,7 @@ function checkCredentials($email, $password, $userType) {
     return false;
 }
 
+$error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST["email"]);
     $password = trim($_POST["password"]);
@@ -56,7 +53,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         exit();
     } else {
-        echo "Invalid email or password.";
+        $error = "Invalid email or password.";
     }
 }
 ?>
@@ -71,11 +68,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #f5f5f5;
             margin: 0;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .login-container {
             width: 400px;
-            margin: 100px auto;
             background-color: #ffffff;
             padding: 30px 25px;
             border-radius: 8px;
@@ -83,11 +83,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-left: 8px solid #4a6fa5;
         }
 
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
         h2 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 25px;
-            font-size: 28px;
+            font-size: 20px;
         }
 
         input, select {
@@ -98,6 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border: 1px solid #ddd;
             font-size: 16px;
             color: #333;
+            box-sizing: border-box;
         }
 
         select {
@@ -116,6 +124,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
+            margin-top: 10px;
         }
 
         button:hover {
@@ -124,9 +133,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        .error-message {
+            color: #e74c3c;
+            background-color: #fdecea;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 4px solid #e74c3c;
+            font-size: 14px;
+        }
+
         .forgot-password {
             text-align: right;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
         .forgot-password a {
@@ -144,24 +164,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         @media (max-width: 500px) {
             .login-container {
                 width: 90%;
+                padding: 25px 20px;
             }
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h1>Book Management System </h1>
+        <h1>Book Management System</h1>
         <h2>Login</h2>
+        
+        <?php if (!empty($error)): ?>
+            <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+        
         <form action="login.php" method="POST">
-            <input type="email" name="email" placeholder="Email" required>
+            <input type="email" name="email" placeholder="Email" required value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
             <input type="password" name="password" placeholder="Password" required>
             <select name="user_type" required>
                 <option value="" disabled selected>User Type</option>
-                <option value="admin">Admin</option>
-                <option value="user">User</option>
+                <option value="admin" <?php echo (isset($_POST['user_type']) && $_POST['user_type'] === 'admin') ? 'selected' : ''; ?>>Admin</option>
+                <option value="user" <?php echo (isset($_POST['user_type']) && $_POST['user_type'] === 'user') ? 'selected' : ''; ?>>User</option>
             </select>
             <button type="submit">Login</button>
         </form>
+        <div class="forgot-password">Don't have a account?
+            <a href="registration.php"> Sing up</a>
+        </div>
         <div class="forgot-password">
             <a href="forgot_password.php">Forgot Password?</a>
         </div>

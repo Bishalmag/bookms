@@ -15,7 +15,7 @@
         #header {
             background-color: #2c3e50;
             color: #fff;
-            padding: 15px 25px;
+            padding: 10px 50px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -78,7 +78,7 @@
 
         @media (max-width: 1200px) {
             #header {
-                margin-left: 0;
+                margin-left: 30px;
                 width: 100%;
                 flex-direction: column;
                 align-items: flex-start;

@@ -1,5 +1,5 @@
 <?php
-require_once 'admin_auth.php';
+
 include('header.php');
 include('sidebar.php');
 
@@ -145,7 +145,7 @@ if (!$conn) {
             while ($row = mysqli_fetch_assoc($result)) {
                 echo "<tr>";
                 echo "<td>" . $row['category_id'] . "</td>";
-                echo "<td>" . $row['type'] . "</td>";
+                echo "<td>" . $row['genre'] . "</td>";
                 echo "<td class='action-btns'>
                         <a class='edit-btn' href='editcategory.php?category_id=" . $row['category_id'] . "'>Edit</a>
                         <a class='delete-btn' href='deletecategory.php?category_id=" . $row['category_id'] . "' onclick='return confirm(\"Are you sure you want to delete this category?\");'>Delete</a>

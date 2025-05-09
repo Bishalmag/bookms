@@ -1,5 +1,5 @@
 <?php 
-require_once 'admin_auth.php';
+
 if (isset($_POST['add_category'])) {
     // Retrieve form data (category_id is auto-incremented)
     $genre = $_POST['genre'];  // Change 'type' to 'genre'

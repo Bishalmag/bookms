@@ -1,5 +1,5 @@
 <?php
-require_once 'admin_auth.php';
+
 
 // Database connection
 $conn = new mysqli("localhost", "root", "", "book_management_system");
@@ -31,12 +31,12 @@ $category = $result->fetch_assoc();
 
 // Handle update form submission
 if (isset($_POST['update_category'])) {
-    $type = $_POST['type'];
+    $genre = $_POST['genre'];
     $description = $_POST['description'];
 
-    $update_sql = "UPDATE categories SET type = ?, description = ? WHERE category_id = ?";
+    $update_sql = "UPDATE categories SET genre = ?, description = ? WHERE category_id = ?";
     $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssi", $type, $description, $category_id);
+    $update_stmt->bind_param("ssi", $genre, $description, $category_id);
 
     if ($update_stmt->execute()) {
         echo "<script>alert('Category updated successfully!'); window.location.href = 'allcategories.php';</script>";
@@ -121,8 +121,8 @@ if (isset($_POST['update_category'])) {
    <div class="form-container">
    <h2>Edit Category</h2>
     <form method="POST">
-        <label for="type">Type</label><br>
-        <input type="text" name="type" value="<?php echo htmlspecialchars($category['type']); ?>" required><br><br>
+        <label for="genre">Genre</label><br>
+        <input type="text" name="genre" value="<?php echo htmlspecialchars($category['genre']); ?>" required><br><br>
 
         <label for="description">Description</label><br>
         <input type="text" name="description" value="<?php echo htmlspecialchars($category['description']); ?>" required><br><br>
