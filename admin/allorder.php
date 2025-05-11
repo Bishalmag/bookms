@@ -87,6 +87,7 @@ $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         border-collapse: separate;
         border-spacing: 0;
         margin: 0 auto;
+        margin-left: 11%;
     }
 
     thead {

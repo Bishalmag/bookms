@@ -218,10 +218,10 @@ textarea {
             ?>
                 <div class="cart-item">
                     <span><?= htmlspecialchars($item['title']) ?> (x<?= $item['quantity'] ?>)</span>
-                    <span>$<?= number_format($subtotal, 2) ?></span>
+                    <span>Rs.<?= number_format($subtotal, 2) ?></span>
                 </div>
             <?php endforeach; ?>
-            <div class="total">Total: $<?= number_format($total, 2) ?></div>
+            <div class="total">Total: Rs.<?= number_format($total, 2) ?></div>
         </div>
 
         <button type="submit" class="btn-submit">Place Order</button>

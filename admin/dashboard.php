@@ -316,7 +316,7 @@ mysqli_close($conn);
                 <?php while($order = mysqli_fetch_assoc($recent_orders)): ?>
                 <li class="data-item">
                     <span class="item-title">Order #<?= $order['order_id'] ?> by <?= $order['username'] ?></span>
-                    <span class="item-value">$<?= number_format($order['total_amount'], 2) ?></span>
+                    <span class="item-value">Rs.<?= number_format($order['total_amount'], 2) ?></span>
                 </li>
                 <?php endwhile; ?>
             </ul>
@@ -335,9 +335,9 @@ mysqli_close($conn);
                 </li>
                 <?php endwhile; ?>
             </ul>
-            <div class="view-all">
+            <!-- <div class="view-all">
                 <a href="allbooks.php?sort=popular">View all books <i class="fas fa-arrow-right"></i></a>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>

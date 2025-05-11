@@ -307,14 +307,14 @@ $total = array_reduce($_SESSION['cart'], fn($sum, $item) => $sum + ($item['price
                             <?php endif; ?>
                             <div class="order-item-details">
                                 <div class="order-item-title"><?= htmlspecialchars($item['title']) ?></div>
-                                <div class="order-item-price">Rs <?= number_format($item['price'], 2) ?></div>
+                                <div class="order-item-price">Rs.<?= number_format($item['price'], 2) ?></div>
                                 <div class="order-item-quantity">Quantity: <?= $item['quantity'] ?></div>
                             </div>
                         </div>
                     <?php endforeach; ?>
                     
                     <div class="order-total">
-                        Total: Rs <?= number_format($total, 2) ?>
+                        Total: Rs. <?= number_format($total, 2) ?>
                     </div>
                 </div>
             </div>

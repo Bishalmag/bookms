@@ -264,6 +264,39 @@ foreach ($ratings_data as $rating) {
         font-size: 0.7rem;
     }
 }
+
+    .search-sort-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .search-bar {
+        flex: 1;
+        min-width: 250px;
+    }
+    
+    .sort-dropdown {
+        width: auto;
+        min-width: 220px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .search-sort-container {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .search-bar, .sort-dropdown {
+            width: 100%;
+        }
+    }
+
+
+
     </style>
 </head>
 <body>
@@ -273,10 +306,22 @@ foreach ($ratings_data as $rating) {
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
+   <div class="search-sort-container">
     <!-- Search Bar -->
-    <div class="mb-4">
+    <div class="search-bar">
         <input type="text" id="bookSearch" class="form-control" placeholder="Search by title, author, or category" onkeyup="debounceSearch()">
     </div>
+
+    <!-- Sorting option display -->
+    <div class="sort-dropdown">
+        <select class="form-select" id="sortDropdown" onchange="handleSortChange()">
+            <option value="title" selected>Sort by Title (A-Z)</option>
+            <option value="rating">Sort by Rating (High-Low)</option>
+        </select>
+    </div>
+</div>
+
+
 
     <!-- Books Display -->
     <?php if (empty($books)): ?>
@@ -301,7 +346,7 @@ foreach ($ratings_data as $rating) {
                                     <?php if (!empty($book['category'])): ?>
                                         <span class="badge bg-secondary"><?= htmlspecialchars($book['category']) ?></span>
                                     <?php endif; ?>
-                                    <span class="fw-bold">$<?= number_format($book['price'], 2) ?></span>
+                                    <span class="fw-bold">Rs.<?= number_format($book['price'], 2) ?></span>
                                 </div>
                                 <div class="book-meta">
                                     <small>Publisher: <?= htmlspecialchars($book['publisher']) ?></small><br>
@@ -511,6 +556,37 @@ window.addEventListener("pageshow", function(event) {
         window.location.reload();
     }
 });
+</script>
+
+<!-- Sorting function -->
+<script>
+function handleSortChange() {
+    const value = document.getElementById('sortDropdown').value;
+    sortBooks(value);
+}
+
+function sortBooks(type) {
+    const cardsContainer = document.getElementById('bookContainer');
+    const cards = Array.from(cardsContainer.querySelectorAll('.col'));
+
+    cards.sort((a, b) => {
+        const cardA = a.querySelector('.book-card');
+        const cardB = b.querySelector('.book-card');
+
+        if (type === 'title') {
+            const titleA = cardA.querySelector('.book-title').textContent.trim().toLowerCase();
+            const titleB = cardB.querySelector('.book-title').textContent.trim().toLowerCase();
+            return titleA.localeCompare(titleB);
+        } else if (type === 'rating') {
+            const zA = parseFloat(cardA.querySelector('.book-hover-buttons div:nth-child(2)')?.textContent.replace('Z-Score:', '').trim()) || 0;
+            const zB = parseFloat(cardB.querySelector('.book-hover-buttons div:nth-child(2)')?.textContent.replace('Z-Score:', '').trim()) || 0;
+            return zB - zA;
+        }
+    });
+
+    // Re-append sorted cards
+    cards.forEach(card => cardsContainer.appendChild(card));
+}
 </script>
 
 <?php include 'footer.php'; ?>

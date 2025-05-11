@@ -106,7 +106,7 @@
     <div id="header">
         <div style="display: flex; align-items: center;">
             <div id="logo">
-                <img src="uploads/image.png" alt="Logo">
+                <img src="uploads/logo.png" alt="Logo">
             </div>
             <div id="banner">
                 <h1>Book Management System</h1>
