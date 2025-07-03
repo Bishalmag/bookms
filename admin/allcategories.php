@@ -1,5 +1,5 @@
 <?php
-
+require_once 'admin_auth.php';
 include('header.php');
 include('sidebar.php');
 
@@ -29,6 +29,7 @@ if (!$conn) {
 
         .content {
             margin-left: 22%;
+            margin-top: 2%;
             padding: 20px;
         }
 

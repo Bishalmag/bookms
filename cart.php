@@ -2,14 +2,13 @@
 session_start();
 include('header.php');
 
-
-// Database connection (move this to the top)
+// Database connection
 $conn = mysqli_connect("localhost", "root", "", "book_management_system");
 if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Add at the top after session_start()
+// Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
     header("Location: login.php");
@@ -21,54 +20,50 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Modify add to cart logic to check stock
-if (isset($_GET['add_to_cart'])) {
-    $book_id = $_GET['add_to_cart'];
+// Function to check book availability
+function checkBookAvailability($conn, $book_id, $requested_quantity) {
+    $sql = "SELECT copies_available FROM books WHERE book_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $book_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
-    // Fetch book details and available stock
+    if ($result->num_rows > 0) {
+        $book = $result->fetch_assoc();
+        return $book['copies_available'] >= $requested_quantity;
+    }
+    return false;
+}
+
+// Function to get book details including available stock
+function getBookDetails($conn, $book_id) {
     $sql = "SELECT *, copies_available FROM books WHERE book_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $book_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $book = $result->fetch_assoc();
-        
-        // Check availability
-        if ($book['copies_available'] <= 0) {
-            $_SESSION['error'] = "This book is out of stock";
-            header("Location: homepage.php");
-            exit();
-        }
-        
-        // Check if already in cart and validate total quantity
-        $cart_quantity = $_SESSION['cart'][$book_id]['quantity'] ?? 0;
-        if (($cart_quantity + 1) > $book['copies_available']) {
-            $_SESSION['error'] = "Cannot add more than available stock";
-            header("Location: homepage.php");
-            exit();
-        }
-        
-        // Rest of your cart logic...
-    }
+    return $result->fetch_assoc();
 }
 
-// Add item to cart
+// Add item to cart with stock validation
 if (isset($_GET['add_to_cart'])) {
     $book_id = $_GET['add_to_cart'];
     
-    // Fetch book details
-    $sql = "SELECT * FROM books WHERE book_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $book_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Get current cart quantity (0 if not in cart)
+    $current_quantity = $_SESSION['cart'][$book_id]['quantity'] ?? 0;
+    $requested_quantity = $current_quantity + 1;
     
-    if ($result->num_rows > 0) {
-        $book = $result->fetch_assoc();
-        
-        // Check if book is already in cart
+    // Check availability
+    if (!checkBookAvailability($conn, $book_id, $requested_quantity)) {
+        $_SESSION['error'] = "Cannot add more than available stock";
+        header("Location: homepage.php");
+        exit();
+    }
+    
+    // Get book details
+    $book = getBookDetails($conn, $book_id);
+    
+    if ($book) {
         if (isset($_SESSION['cart'][$book_id])) {
             $_SESSION['cart'][$book_id]['quantity'] += 1;
         } else {
@@ -76,12 +71,50 @@ if (isset($_GET['add_to_cart'])) {
                 'title' => $book['title'],
                 'price' => $book['price'],
                 'image' => $book['image'],
-                'quantity' => 1
+                'quantity' => 1,
+                'max_quantity' => $book['copies_available'] // Store max available
             ];
         }
-        
-        echo "<script>alert('Book added to cart!');</script>";
+        $_SESSION['success'] = "Book added to cart!";
     }
+    header("Location: cart.php");
+    exit();
+}
+
+// Update cart quantities with stock validation
+if (isset($_POST['update_cart'])) {
+    $errors = [];
+    
+    foreach ($_POST['quantity'] as $book_id => $quantity) {
+        $quantity = (int)$quantity;
+        
+        // Skip if book not in cart
+        if (!isset($_SESSION['cart'][$book_id])) continue;
+        
+        // Remove if quantity is 0 or less
+        if ($quantity <= 0) {
+            unset($_SESSION['cart'][$book_id]);
+            continue;
+        }
+        
+        // Check stock availability
+        $book = getBookDetails($conn, $book_id);
+        if (!$book || $quantity > $book['copies_available']) {
+            $errors[] = "Only {$book['copies_available']} available for '{$_SESSION['cart'][$book_id]['title']}'";
+            continue;
+        }
+        
+        // Update quantity if valid
+        $_SESSION['cart'][$book_id]['quantity'] = $quantity;
+        $_SESSION['cart'][$book_id]['max_quantity'] = $book['copies_available'];
+    }
+    
+    if (!empty($errors)) {
+        $_SESSION['error'] = implode("<br>", $errors);
+    }
+    
+    header("Location: cart.php");
+    exit();
 }
 
 // Remove item from cart
@@ -89,20 +122,10 @@ if (isset($_GET['remove_from_cart'])) {
     $book_id = $_GET['remove_from_cart'];
     if (isset($_SESSION['cart'][$book_id])) {
         unset($_SESSION['cart'][$book_id]);
+        $_SESSION['success'] = "Item removed from cart";
     }
-}
-
-// Update cart quantities
-if (isset($_POST['update_cart'])) {
-    foreach ($_POST['quantity'] as $book_id => $quantity) {
-        if (isset($_SESSION['cart'][$book_id])) {
-            if ($quantity > 0) {
-                $_SESSION['cart'][$book_id]['quantity'] = $quantity;
-            } else {
-                unset($_SESSION['cart'][$book_id]);
-            }
-        }
-    }
+    header("Location: cart.php");
+    exit();
 }
 ?>
 
@@ -113,7 +136,7 @@ if (isset($_POST['update_cart'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart</title>
     <style>
-         .content {
+        .content {
             margin-left: 22%;
             padding: 30px;
             background-color: #f5f7fa;
@@ -131,6 +154,24 @@ if (isset($_POST['update_cart'])) {
             color: #2c3e50;
             text-align: center;
             margin-bottom: 30px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
         
         .cart-table {
@@ -261,6 +302,16 @@ if (isset($_POST['update_cart'])) {
         <div class="cart-container">
             <h2>Your Shopping Cart</h2>
             
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success"><?= $_SESSION['success'] ?></div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
+            
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger"><?= $_SESSION['error'] ?></div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+            
             <?php if (!empty($_SESSION['cart'])): ?>
                 <form method="POST" action="cart.php">
                     <table class="cart-table">
@@ -277,6 +328,9 @@ if (isset($_POST['update_cart'])) {
                             <?php 
                             $total = 0;
                             foreach ($_SESSION['cart'] as $book_id => $item): 
+                                // Get current stock from database
+                                $book = getBookDetails($conn, $book_id);
+                                $max_quantity = $book ? $book['copies_available'] : $item['max_quantity'];
                                 $subtotal = $item['price'] * $item['quantity'];
                                 $total += $subtotal;
                             ?>
@@ -298,7 +352,10 @@ if (isset($_POST['update_cart'])) {
                                     <td>
                                         <input type="number" name="quantity[<?= $book_id ?>]" 
                                                value="<?= $item['quantity'] ?>" min="1" 
-                                               class="quantity-input">
+                                               max="<?= $max_quantity ?>"
+                                               class="quantity-input"
+                                               onchange="validateQuantity(this, <?= $max_quantity ?>)">
+                                        <small style="display: block; color: #666;">Max: <?= $max_quantity ?></small>
                                     </td>
                                     <td>Rs.<?= number_format($subtotal, 2) ?></td>
                                     <td>
@@ -317,9 +374,8 @@ if (isset($_POST['update_cart'])) {
                     <div class="cart-actions">
                         <a href="homepage.php" class="btn btn-cart">Continue Shopping</a>
                         <div>
-                            <button type="submit" name="update_cart" class="btn btn-cart">Update Cart</button>
-                            <a href="clearcart.php" class="btn btn-cart">Clear Cart</a>
-                            <a href="checkout.php" class="btn btn-cart">Proceed to Checkout</a>
+                            <button type="submit" name="update_cart" class="btn btn-update">Update Cart</button>
+                            <a href="checkout.php" class="btn btn-checkout">Proceed to Checkout</a>
                         </div>
                     </div>
                 </form>
@@ -329,12 +385,22 @@ if (isset($_POST['update_cart'])) {
                     <a href="homepage.php" class="btn btn-continue" style="margin-top: 20px;">Browse Books</a>
                 </div>
             <?php endif; ?>
-           
         </div>
     </div>
     
+    <script>
+        function validateQuantity(input, max) {
+            if (input.value > max) {
+                alert(`Maximum available quantity is ${max}`);
+                input.value = max;
+            }
+            if (input.value < 1) {
+                input.value = 1;
+            }
+        }
+    </script>
 </body>
 </html>
 
 <?php mysqli_close($conn); ?>
-<?php include 'footer.php'; ?>  
+<?php include 'footer.php'; ?>

@@ -1,5 +1,7 @@
 <?php
-
+require_once 'admin_auth.php';
+include('header.php');
+include('sidebar.php');
 // Database connection
 $conn = mysqli_connect("localhost", "root", "", "book_management_system");
 if (!$conn) {
@@ -136,3 +138,4 @@ if (isset($_POST['update_author'])) {
 // Close connection
 mysqli_close($conn);
 ?>
+<?php include('footer.php'); ?>

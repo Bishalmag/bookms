@@ -1,6 +1,7 @@
 <?php
-
-
+require_once 'admin_auth.php';
+include('header.php');
+include('sidebar.php');
 // Database connection
 $conn = new mysqli("localhost", "root", "", "book_management_system");
 if ($conn->connect_error) {
@@ -134,3 +135,4 @@ if (isset($_POST['update_category'])) {
 </html>
 
 <?php $conn->close(); ?>
+<?php include('footer.php'); ?>

@@ -8,35 +8,54 @@ function checkCredentials($email, $password, $userType) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Use the appropriate table based on user type
+    // Whitelist table names
+    $allowedTables = ["admin", "users"];
+    if (!in_array($userType, ["admin", "user"])) {
+        $conn->close();
+        return false;
+    }
     $table = $userType === "admin" ? "admin" : "users";
 
-    // Fetch user ID, email, and password
+    // Prepare and execute statement
     $stmt = $conn->prepare("SELECT id, email, password FROM $table WHERE email = ?");
+    if (!$stmt) {
+        $conn->close();
+        return false;
+    }
+
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
 
+    $isAuthenticated = false;
     if ($stmt->num_rows > 0) {
         $stmt->bind_result($user_id, $dbEmail, $dbPassword);
         $stmt->fetch();
 
-        // Compare plain text passwords (not secure — use hashing in production)
-        if ($password === $dbPassword) {
-            $_SESSION['logged_in'] = true;
-            $_SESSION['email'] = $dbEmail;
-            $_SESSION['user_id'] = $user_id;
-            $_SESSION['user_type'] = $userType;
-
-            $stmt->close();
-            $conn->close();
-            return true;
+        if ($userType === "admin") {
+            // Temporary: plain text check for admin only
+            if ($password === $dbPassword) {
+                $_SESSION['logged_in'] = true;
+                $_SESSION['email'] = $dbEmail;
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['user_type'] = $userType;
+                $isAuthenticated = true;
+            }
+        } else {
+            // Normal hashed password check for users
+            if (password_verify($password, $dbPassword)) {
+                $_SESSION['logged_in'] = true;
+                $_SESSION['email'] = $dbEmail;
+                $_SESSION['user_id'] = $user_id;
+                $_SESSION['user_type'] = $userType;
+                $isAuthenticated = true;
+            }
         }
     }
 
     $stmt->close();
     $conn->close();
-    return false;
+    return $isAuthenticated;
 }
 
 $error = '';
@@ -57,6 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -188,8 +208,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </select>
             <button type="submit">Login</button>
         </form>
-        <div class="forgot-password">Don't have a account?
-            <a href="registration.php"> Sing up</a>
+        <div class="forgot-password">Don't have an account?
+            <a href="registration.php"> Sign up</a>
         </div>
         <div class="forgot-password">
             <a href="forgot_password.php">Forgot Password?</a>

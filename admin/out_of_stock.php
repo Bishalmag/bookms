@@ -1,4 +1,5 @@
 <?php
+require_once 'admin_auth.php';
 include '../db.php'; // Ensure this contains your PDO $conn
 include('header.php');
 include('sidebar.php');
@@ -18,6 +19,7 @@ $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #f5f5f5;
             margin: 0;
             padding: 30px;
+            margin-top: 30px;
         }
 
         .book-list {

@@ -61,7 +61,7 @@
     #sidebar {
         background-color: #2c3e50;
         color: #ecf0f1;
-        width: 250px;
+        width: 150px;
         height: 100vh;
         position: fixed;
         top: 0;

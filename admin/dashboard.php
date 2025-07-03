@@ -63,7 +63,7 @@ mysqli_close($conn);
         }
 
         .main-content {
-            margin-left: 260px;
+            margin-left: 200px;
             padding: 30px;
             transition: margin-left 0.3s;
         }

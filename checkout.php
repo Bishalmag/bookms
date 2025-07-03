@@ -41,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Insert order
-        $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, shipping_address) 
-                                VALUES (:user_id, :total_amount, :shipping_address)");
+        // Insert order with initial status as 'pending'
+        $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, shipping_address, status) 
+                                VALUES (:user_id, :total_amount, :shipping_address, 'pending')");
         $stmt->execute([
             ':user_id' => $_SESSION['user_id'],
             ':total_amount' => $total_amount,
@@ -70,10 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        // Clear cart and redirect
-         
-         $_SESSION['order_success'] = true;
-        header("Location: order_success.php?order_id=$order_id");
+        // Store order data for payment gateway
+        $_SESSION['order_data'] = [
+            'order_id' => $order_id,
+            'total_amount' => $total_amount,
+            'items' => $_SESSION['cart'],
+            'shipping_address' => $shipping_address
+        ];
+        
+        // Redirect to payment gateway
+        header("Location: esewa_payment.php");
         exit();
 
     } catch (PDOException $e) {
@@ -91,105 +97,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Checkout</title>
     <style>
         body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 20px;
-}
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
 
-.checkout-container {
-    width: 50%;
-    margin: 40px auto;
-    background-color: #fff;
-    padding: 30px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    border-left: 8px solid #4a6fa5;
-}
+        .checkout-container {
+            width: 50%;
+            margin: 40px auto;
+            background-color: #fff;
+            padding: 30px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-left: 8px solid #4a6fa5;
+        }
 
-h2, h3 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 25px;
-    font-size: 26px;
-}
+        h2, h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 26px;
+        }
 
-.form-group {
-    margin-bottom: 20px;
-}
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
-}
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
 
-textarea {
-    width: 100%;
-    padding: 12px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    font-size: 16px;
-    color: #333;
-    resize: vertical;
-    min-height: 100px;
-}
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            color: #333;
+            resize: vertical;
+            min-height: 100px;
+        }
 
-.cart-summary {
-    margin-top: 30px;
-    border-top: 1px solid #ddd;
-    padding-top: 20px;
-}
+        .cart-summary {
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
 
-.cart-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    color: #444;
-}
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            color: #444;
+        }
 
-.total {
-    text-align: right;
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 2px solid #ddd;
-    color: #222;
-}
+        .total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+            color: #222;
+        }
 
-.btn-submit {
-    background-color: #4a6fa5;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 20px;
-    transition: background-color 0.3s, transform 0.2s;
-}
+        .btn-submit {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
 
-.btn-submit:hover {
-    background-color: #3a5a80;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+        .btn-submit:hover {
+            background-color: #3a5a80;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-.error-message {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-left: 4px solid #dc3545;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
+        .error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -229,4 +234,4 @@ textarea {
 </div>
 </body>
 </html>
-<?php include 'footer.php'; ?> 
+<?php include 'footer.php'; ?>

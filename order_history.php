@@ -24,13 +24,14 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Fetch user's orders
-$stmt = $conn->prepare("SELECT o.order_id, o.total_amount, 
-                        COUNT(oi.item_id) as item_count 
-                        FROM orders o
-                        JOIN order_items oi ON o.order_id = oi.order_id
-                        WHERE o.user_id = ?
-                        GROUP BY o.order_id");
+// Fetch user's orders with all necessary fields
+$stmt = $conn->prepare("SELECT o.order_id, o.total_amount, o.status, o.date,
+                       COUNT(oi.item_id) as item_count 
+                       FROM orders o
+                       LEFT JOIN order_items oi ON o.order_id = oi.order_id
+                       WHERE o.user_id = ?
+                       GROUP BY o.order_id
+                       ORDER BY o.date DESC");
 $stmt->execute([$_SESSION['user_id']]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -90,7 +91,24 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             color: #4a6fa5;
         }
         
-        .order-date {
+        .order-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .order-meta {
+            margin-bottom: 10px;
             color: #6c757d;
         }
         
@@ -141,6 +159,15 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             text-decoration: none;
         }
 
+        .alert-success {
+            padding: 15px;
+            background-color: #d4edda;
+            color: #155724;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
         .home-button {
             display: inline-block;
             margin-top: 20px;
@@ -176,11 +203,23 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="order-history-container">
             <h1>Your Order History</h1>
             
+            <?php if (isset($_GET['payment']) && $_GET['payment'] === 'success'): ?>
+                <div class="alert-success">
+                    Your payment was processed successfully!
+                </div>
+            <?php endif; ?>
+            
             <?php if (count($orders) > 0): ?>
                 <?php foreach ($orders as $order): ?>
                     <div class="order-card">
                         <div class="order-header">
                             <span class="order-id">Order #<?= $order['order_id'] ?></span>
+                            <span class="order-status status-<?= $order['status'] ?>">
+                                <?= ucfirst($order['status']) ?>
+                            </span>
+                        </div>
+                        <div class="order-meta">
+                            <?= date('M d, Y h:i A', strtotime($order['date'])) ?>
                         </div>
                         <div class="order-details">
                             <div class="order-items">
@@ -200,11 +239,11 @@ $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
             
-          
+            <div style="text-align: center;">
+                <a href="homepage.php" class="home-button">Back to Home</a>
+            </div>
         </div>
     </div>
-
-  
 </body>
 </html>
 <?php include('footer.php'); ?>

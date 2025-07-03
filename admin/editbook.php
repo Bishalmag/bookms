@@ -1,5 +1,7 @@
 <?php
-
+require_once 'admin_auth.php';
+include('header.php');
+include('sidebar.php');
 
 // Database connection
 $conn = mysqli_connect("localhost", "root", "", "book_management_system");
@@ -254,3 +256,4 @@ if (isset($_POST['update_book'])) {
 </div>
 
 <?php mysqli_close($conn); ?>
+<?php include('footer.php'); ?>

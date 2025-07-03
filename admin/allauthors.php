@@ -1,4 +1,5 @@
 <?php
+require_once 'admin_auth.php';
 include('header.php');
 include('sidebar.php');
 
@@ -22,16 +23,18 @@ if (!$conn) {
     <style>
     /* Global styles for content */
 .content {
-    margin-left: 22%;
+    margin-left: 15%;
     padding: 30px;
     background-color: #f5f7fa;
     min-height: 100vh;
+    
 }
 
 /* Center title style */
 .center-title {
     text-align: center;
     margin-bottom: 30px;
+    margin-top: 40px;
 }
 
 .center-title h1 {
